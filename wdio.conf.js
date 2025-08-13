@@ -8,7 +8,7 @@ export const config = {
 
   specs: ["./features/**/*.feature"],
 
-  maxInstances: 10,
+  maxInstances: 1,
 
   capabilities: [
     {

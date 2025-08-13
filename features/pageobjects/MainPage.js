@@ -1,17 +1,40 @@
 import BasePage from "./Basepage.js";
 import urls from "../../config/urls.js";
-import allureReporter from "@wdio/allure-reporter";
+import { expect } from "chai";
+import mainPage from "./selectors/mainPageSelectors.js";
+
 class MainPage extends BasePage {
   get mainPageHeader() {
-    return $("#main-page-header");
-  }
-  get addingToCartButton() {
-    return $(".adding-button");
+    return $(mainPage.mainPageHeader);
   }
 
-  async open() {
-    await super.open(urls.home, this.mainPageHeader);
+  addingToCartButton(nameOfItem) {
+    return $(mainPage.addingToCartButton(nameOfItem));
   }
-  async addingToCart() {}
+
+  cartItem(nameOfItem) {
+    return $(mainPage.cartItem(nameOfItem));
+  }
+
+  cartItemQuantity(nameOfItem) {
+    return $(mainPage.cartItemQuantity(nameOfItem));
+  }
+
+  async navigateTo() {
+    await super.navigateTo(urls.home, this.mainPageHeader);
+  }
+  async addingToCart(nameOfItem) {
+    await this.click(this.addingToCartButton(nameOfItem));
+  }
+  async checkAbscenceInCart(nameOfItem) {
+    const textOfItem = await this.getText(this.cartItem(nameOfItem));
+    expect(textOfItem).to.equal(nameOfItem);
+  }
+  async checkQuantity(nameOfItem, quantityOfItem) {
+    const textOfQuantity = await this.getText(
+      this.cartItemQuantity(nameOfItem)
+    );
+    expect(textOfQuantity).to.equal(quantityOfItem);
+  }
 }
 export default new MainPage();

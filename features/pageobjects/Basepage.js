@@ -1,91 +1,78 @@
-import allureReporter from "@wdio/allure-reporter";
 import { config } from "../../wdio.conf.js";
+import * as pageHelpers from "../../utils/pageHelpers.js";
 export default class BasePage {
-  async open(
+  async navigateTo(
     path,
     expectedElementOrLocator,
     timeout = config.customTimeouts.pageLoad
   ) {
-    const url = await this.createUrl(path);
+    const url = await pageHelpers.buildUrl(path);
     try {
-      await this.allureCasualStep(
+      await pageHelpers.runAllureStep(
         `Open ${url}`,
         async () => await browser.url(url)
       );
-      await this.waitReadyState(timeout);
-      await this.waitForDisplayed(expectedElementOrLocator, timeout);
+      await pageHelpers.waitForDocumentReady(timeout);
+      await pageHelpers.waitForDisplayed(expectedElementOrLocator, timeout);
     } catch (error) {
-      await this.takeScreenshot(`Screenshot on open path (${url})`);
-      await this.getPageSource(`Page source on failure (${url})`);
+      await pageHelpers.takeScreenshot(`Screenshot on open path (${url})`);
+      await pageHelpers.getPageSource(`Page source on failure (${url})`);
       throw error;
     }
   }
-  async takeScreenshot(messageForAllure) {
-    try {
-      const screenshot = await browser.takeScreenshot();
-      allureReporter.addAttachment(
-        messageForAllure,
-        Buffer.from(screenshot, "base64"),
-        "image/png"
-      );
-    } catch (e) {}
-  }
-  async getPageSource(messageForAllure) {
-    try {
-      const pageSource = await browser.getPageSource();
-      allureReporter.addAttachment(messageForAllure, pageSource, "text/html");
-    } catch (e) {}
-  }
-  async waitReadyState(timeout = config.customTimeouts.pageLoad) {
-    await this.allureCasualStep(`Check document.readyState`, async () => {
-      await browser.waitUntil(
-        async () =>
-          (await browser.execute(() => document.readyState)) === "complete",
-        {
-          timeout,
-          timeoutMsg: `Page did not load within ${timeout}ms`,
-        }
-      );
-    });
-  }
-  async createUrl(path) {
-    return this.allureCasualStep("Create URL", async () => {
-      const baseUrl = config.baseUrl;
-      if (!baseUrl) {
-        throw new Error("baseUrl is not set in config");
-      }
-      const url = path.startsWith("http")
-        ? path
-        : new URL(path, baseUrl).toString();
-      return url;
-    });
-  }
-  async waitForDisplayed(
+  async click(
     expectedElementOrLocator,
     timeout = config.customTimeouts.pageLoad
   ) {
-    await this.allureCasualStep("Check key element for displayed", async () => {
-      if (expectedElementOrLocator) {
-        const expectedElement =
-          typeof expectedElementOrLocator === "string"
-            ? $(expectedElementOrLocator)
-            : await expectedElementOrLocator;
-
-        await expectedElement.waitForDisplayed({
-          timeout,
-          timeoutMsg: `Key element ${expectedElement.selector} not displayed after ${timeout}ms`,
-        });
-      }
-    });
-  }
-  async allureCasualStep(message, func) {
-    allureReporter.startStep(message);
+    const expectedElement = await pageHelpers.resolveElement(
+      expectedElementOrLocator
+    );
     try {
-      const result = await func();
-      allureReporter.endStep("passed");
-      return result;
+      await pageHelpers.waitForElementReady(expectedElementOrLocator, timeout);
+      try {
+        await pageHelpers.runAllureStep(
+          `Click ${expectedElement.selector}`,
+          async () => await expectedElement.click()
+        );
+      } catch (error) {
+        await pageHelpers.runAllureStep(
+          `JS fallback click on ${expectedElement.selector}`,
+          async () => {
+            await browser.execute((el) => el.click(), expectedElement);
+          }
+        );
+      }
     } catch (error) {
-      allureReporter.endStep("failed");
+      await pageHelpers.takeScreenshot(
+        `Screenshot of page where should be ${expectedElement.selector}`
+      );
+      await pageHelpers.getPageSource(
+        `Page source of page where should be ${expectedElement.selector}`
+      );
+      throw error;
+    }
+  }
+  async getText(
+    expectedElementOrLocator,
+    timeout = config.customTimeouts.pageLoad
+  ) {
+    const expectedElement = await pageHelpers.resolveElement(
+      expectedElementOrLocator
+    );
+    try {
+      await pageHelpers.waitForExist(expectedElementOrLocator, timeout);
+      await pageHelpers.waitForDisplayed(expectedElementOrLocator, timeout);
+      return pageHelpers.runAllureStep(
+        `Get text of element ${expectedElement.selector}`,
+        async () => (await expectedElement.getText()).trim()
+      );
+    } catch (error) {
+      await pageHelpers.takeScreenshot(
+        `Screenshot of page where should be ${expectedElement.selector}`
+      );
+      await pageHelpers.getPageSource(
+        `Page source of page where should be ${expectedElement.selector}`
+      );
       throw error;
     }
   }

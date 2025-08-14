@@ -1,11 +1,8 @@
 const mainPage = {
   mainPageHeader: "#main-page-header",
-  addingToCartButton: (name) =>
-    `//li[@class="adding-button" and normalize-space(text())="${name}"]//button`,
-  cartItem: (name) =>
-    `//ul[@id="cart-items"]//li[@class="cart-item"]/p[@class="cart-item-text" and normalize-space(text())="${name}"]`,
-  cartItemQuantity: (name) =>
-    `//ul[@id="cart-items"]/li[@class="cart-item"][p[@class="cart-item-text" and normalize-space(text())="${name}"]]/span[@class="cart-item-quantity"]`,
+  addingToCartButton: (name) => `li[data-testid="menu-item-${name}"] button`,
+  cartItem: (name) => `li[data-testid="cart-item-${name}"] p`,
+  cartItemQuantity: (name) => `li[data-testid="cart-item-${name}"] span`,
 };
 
 export default mainPage;

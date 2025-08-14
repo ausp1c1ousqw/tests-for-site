@@ -1,6 +1,5 @@
 import BasePage from "./Basepage.js";
 import urls from "../../config/urls.js";
-import { expect } from "chai";
 import mainPage from "./selectors/mainPageSelectors.js";
 
 class MainPage extends BasePage {
@@ -8,33 +7,41 @@ class MainPage extends BasePage {
     return $(mainPage.mainPageHeader);
   }
 
-  addingToCartButton(nameOfItem) {
-    return $(mainPage.addingToCartButton(nameOfItem));
+  addToCartButton(name) {
+    return $(mainPage.addingToCartButton(name));
   }
 
-  cartItem(nameOfItem) {
-    return $(mainPage.cartItem(nameOfItem));
+  cartItem(name) {
+    return $(mainPage.cartItem(name));
   }
 
-  cartItemQuantity(nameOfItem) {
-    return $(mainPage.cartItemQuantity(nameOfItem));
+  cartItemQuantity(name) {
+    return $(mainPage.cartItemQuantity(name));
   }
 
   async navigateTo() {
     await super.navigateTo(urls.home, this.mainPageHeader);
   }
-  async addingToCart(nameOfItem) {
-    await this.click(this.addingToCartButton(nameOfItem));
+  async addItemToCart(name) {
+    await this.click(this.addToCartButton(name));
   }
-  async checkAbscenceInCart(nameOfItem) {
-    const textOfItem = await this.getText(this.cartItem(nameOfItem));
-    expect(textOfItem).to.equal(nameOfItem);
-  }
-  async checkQuantity(nameOfItem, quantityOfItem) {
-    const textOfQuantity = await this.getText(
-      this.cartItemQuantity(nameOfItem)
+  async checkItemPresenceInCart(name) {
+    const text = await this.getText(this.cartItem(name));
+    this.expectWithAllure(
+      `Compare actual - ${text} and expected - ${name}`,
+      text,
+      name,
+      "equal"
     );
-    expect(textOfQuantity).to.equal(quantityOfItem);
+  }
+  async checkItemQuantity(name, quantity) {
+    const textOfQuantity = await this.getText(this.cartItemQuantity(name));
+    this.expectWithAllure(
+      `Compare actual - ${textOfQuantity} and expected - ${quantity}`,
+      textOfQuantity,
+      quantity,
+      "equal"
+    );
   }
 }
 export default new MainPage();

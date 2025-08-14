@@ -1,30 +1,24 @@
 import allureReporter from "@wdio/allure-reporter";
 import { config } from "../wdio.conf.js";
 export async function waitForExist(
-  expectedElementOrLocator,
-  timeout = config.customTimeouts.pageLoad
+  elementOrLocator,
+  timeout = config.customTimeouts.waitforTimeout
 ) {
-  await this.runAllureStep("Verify element exists", async () => {
-    if (expectedElementOrLocator) {
-      const expectedElement = await this.resolveElement(
-        expectedElementOrLocator
-      );
-      await expectedElement.waitForExist({
+  const element = await this.resolveElement(elementOrLocator);
+  await this.runAllureStep(
+    `Verify element exists (${element.selector})`,
+    async () => {
+      await element.waitForExist({
         timeout,
-        timeoutMsg: `Element ${expectedElement.selector} not exist after ${timeout}ms`,
+        timeoutMsg: `Element not exist after ${timeout}ms (${element.selector})`,
       });
     }
-  });
+  );
 }
-export async function waitForElementReady(
-  expectedElementOrLocator,
-  timeout = config.customTimeouts.pageLoad
+
+export async function takeScreenshot(
+  messageForAllure = "Screenshot of page on failure"
 ) {
-  await this.waitForExist(expectedElementOrLocator, timeout);
-  await this.waitForDisplayed(expectedElementOrLocator, timeout);
-  await this.waitForClickable(expectedElementOrLocator, timeout);
-}
-export async function takeScreenshot(messageForAllure) {
   try {
     const screenshot = await browser.takeScreenshot();
     allureReporter.addAttachment(
@@ -34,14 +28,16 @@ export async function takeScreenshot(messageForAllure) {
     );
   } catch (e) {}
 }
-export async function getPageSource(messageForAllure) {
+export async function getPageSource(
+  messageForAllure = "Page source on failure"
+) {
   try {
     const pageSource = await browser.getPageSource();
     allureReporter.addAttachment(messageForAllure, pageSource, "text/html");
   } catch (e) {}
 }
 export async function waitForDocumentReady(
-  timeout = config.customTimeouts.pageLoad
+  timeout = config.customTimeouts.pageLoadTimeout
 ) {
   await this.runAllureStep(`Check document.readyState`, async () => {
     await browser.waitUntil(
@@ -67,20 +63,19 @@ export async function buildUrl(path) {
   });
 }
 export async function waitForDisplayed(
-  expectedElementOrLocator,
-  timeout = config.customTimeouts.pageLoad
+  elementOrLocator,
+  timeout = config.customTimeouts.waitforTimeout
 ) {
-  await this.runAllureStep("Check element is displayed", async () => {
-    if (expectedElementOrLocator) {
-      const expectedElement = await this.resolveElement(
-        expectedElementOrLocator
-      );
-      await expectedElement.waitForDisplayed({
+  const element = await this.resolveElement(elementOrLocator);
+  await this.runAllureStep(
+    `Check element is displayed (${element.selector})`,
+    async () => {
+      await element.waitForDisplayed({
         timeout,
-        timeoutMsg: `Element ${expectedElement.selector} not displayed after ${timeout}ms`,
+        timeoutMsg: `Element not displayed after ${timeout}ms (${element.selector})`,
       });
     }
-  });
+  );
 }
 export async function runAllureStep(message, func) {
   allureReporter.startStep(message);
@@ -94,25 +89,24 @@ export async function runAllureStep(message, func) {
   }
 }
 export async function waitForClickable(
-  expectedElementOrLocator,
-  timeout = config.customTimeouts.pageLoad
+  elementOrLocator,
+  timeout = config.customTimeouts.waitforTimeout
 ) {
-  await this.runAllureStep("Check element to be clickable", async () => {
-    if (expectedElementOrLocator) {
-      const expectedElement = await this.resolveElement(
-        expectedElementOrLocator
-      );
-      await expectedElement.waitForClickable({
+  const element = await this.resolveElement(elementOrLocator);
+  await this.runAllureStep(
+    `Check element to be clickable (${element.selector})`,
+    async () => {
+      await element.waitForClickable({
         timeout,
-        timeoutMsg: `Element ${expectedElement.selector} not clickable after ${timeout}ms`,
+        timeoutMsg: `Element not clickable after ${timeout}ms (${element.selector})`,
       });
     }
-  });
+  );
 }
-export async function resolveElement(expectedElementOrLocator) {
-  const expectedElement =
-    typeof expectedElementOrLocator === "string"
-      ? $(expectedElementOrLocator)
-      : await expectedElementOrLocator;
-  return expectedElement;
+export async function resolveElement(elementOrLocator) {
+  const element =
+    typeof elementOrLocator === "string"
+      ? $(elementOrLocator)
+      : await elementOrLocator;
+  return element;
 }

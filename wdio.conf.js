@@ -1,8 +1,8 @@
 export const config = {
   baseUrl: process.env.BASE_URL || "http://localhost:3000",
   customTimeouts: {
-    pageLoad: 10000,
-    elementVisible: 5000,
+    pageLoadTimeout: 10000,
+    waitforTimeout: 5000,
   },
   runner: "local",
 

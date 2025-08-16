@@ -1,12 +1,29 @@
 Feature: Add pizza to cart
 
-  Scenario Outline: Add one pizza to the cart
-    Given I open the pizza menu page
-    When I add "<pizzaName>" pizza to the cart
-    Then the cart should contain "<pizzaName>" with quantity "<quantity>"
+  Scenario: Add one pizza to the cart
+    Given I open the main page
+    When I add to cart "margarita"
+    Then I should see "margarita" in the cart with quantity "1"
 
-  Examples:
-    | pizzaName       | quantity |
-    | full of meat    | 1        |
-    | peperoni        | 1        |
-    | with vegetables | 1        |
+  Scenario: Add quantity in the cart
+    Given I open the main page
+    When I add to cart "margarita"
+    And I increase quantity of "margarita" by "2"
+    Then I should see "margarita" in the cart with quantity "3"
+
+Scenario: Empty cart state
+    Given I open the main page
+    Then I should see "Your cart is empty"
+
+Scenario: Clearing the cart
+    Given I open the main page
+    When I add to cart "margarita"
+    And I add to cart "full of meat"
+    And I clear cart
+    Then I should see "Your cart is empty"
+
+Scenario: Total price calculation
+    Given I open the main page
+    When I add to cart "margarita"
+    And I add to cart "full of meat"
+    Then Total price should be "22"

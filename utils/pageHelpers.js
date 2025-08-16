@@ -1,20 +1,5 @@
 import allureReporter from "@wdio/allure-reporter";
 import { config } from "../wdio.conf.js";
-export async function waitForExist(
-  elementOrLocator,
-  timeout = config.customTimeouts.waitforTimeout
-) {
-  const element = await this.resolveElement(elementOrLocator);
-  await this.runAllureStep(
-    `Verify element exists (${element.selector})`,
-    async () => {
-      await element.waitForExist({
-        timeout,
-        timeoutMsg: `Element not exist after ${timeout}ms (${element.selector})`,
-      });
-    }
-  );
-}
 
 export async function takeScreenshot(
   messageForAllure = "Screenshot of page on failure"
@@ -39,7 +24,7 @@ export async function getPageSource(
 export async function waitForDocumentReady(
   timeout = config.customTimeouts.pageLoadTimeout
 ) {
-  await this.runAllureStep(`Check document.readyState`, async () => {
+  await runAllureStep(`Check document.readyState`, async () => {
     await browser.waitUntil(
       async () =>
         (await browser.execute(() => document.readyState)) === "complete",
@@ -51,7 +36,7 @@ export async function waitForDocumentReady(
   });
 }
 export async function buildUrl(path) {
-  return this.runAllureStep("Build URL", async () => {
+  return runAllureStep("Build URL", async () => {
     const baseUrl = config.baseUrl;
     if (!baseUrl) {
       throw new Error("baseUrl is not set in config");
@@ -61,21 +46,6 @@ export async function buildUrl(path) {
       : new URL(path, baseUrl).toString();
     return url;
   });
-}
-export async function waitForDisplayed(
-  elementOrLocator,
-  timeout = config.customTimeouts.waitforTimeout
-) {
-  const element = await this.resolveElement(elementOrLocator);
-  await this.runAllureStep(
-    `Check element is displayed (${element.selector})`,
-    async () => {
-      await element.waitForDisplayed({
-        timeout,
-        timeoutMsg: `Element not displayed after ${timeout}ms (${element.selector})`,
-      });
-    }
-  );
 }
 export async function runAllureStep(message, func) {
   allureReporter.startStep(message);
@@ -88,25 +58,17 @@ export async function runAllureStep(message, func) {
     throw error;
   }
 }
-export async function waitForClickable(
-  elementOrLocator,
-  timeout = config.customTimeouts.waitforTimeout
-) {
-  const element = await this.resolveElement(elementOrLocator);
-  await this.runAllureStep(
-    `Check element to be clickable (${element.selector})`,
-    async () => {
-      await element.waitForClickable({
-        timeout,
-        timeoutMsg: `Element not clickable after ${timeout}ms (${element.selector})`,
-      });
-    }
-  );
+export async function expectWithAllure(message, callback) {
+  return safeAction(async () => {
+    await runAllureStep(message, async () => await callback());
+  });
 }
-export async function resolveElement(elementOrLocator) {
-  const element =
-    typeof elementOrLocator === "string"
-      ? $(elementOrLocator)
-      : await elementOrLocator;
-  return element;
+export async function safeAction(action) {
+  try {
+    return await action();
+  } catch (error) {
+    await takeScreenshot();
+    await getPageSource();
+    throw error;
+  }
 }
